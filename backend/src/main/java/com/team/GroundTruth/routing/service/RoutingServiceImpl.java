@@ -9,6 +9,7 @@ import com.team.GroundTruth.routing.exception.NodeSnapException;
 import com.team.GroundTruth.routing.exception.RoutingException;
 import com.team.GroundTruth.routing.model.Location;
 import com.team.GroundTruth.routing.model.RouteResult;
+import com.team.GroundTruth.routing.modifier.InconvenienceFactorProvider;
 import com.team.GroundTruth.routing.repo.EdgeRepository;
 import com.team.GroundTruth.routing.repo.NodeRepository;
 import java.util.ArrayList;
@@ -27,9 +28,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class RoutingServiceImpl implements RoutingService {
 
+	private static final double MIN_INCONVENIENCE_FACTOR = 1e-6;
+
 	private final NodeRepository nodeRepository;
 	private final EdgeRepository edgeRepository;
 	private final AStarRouter aStarRouter;
+	private final InconvenienceFactorProvider inconvenienceFactorProvider;
 
 	/**
 	 * Creates a routing service implementation.
@@ -37,15 +41,19 @@ public class RoutingServiceImpl implements RoutingService {
 	 * @param nodeRepository repository used for node queries
 	 * @param edgeRepository repository used for edge queries
 	 * @param aStarRouter A* router implementation
+	 * @param inconvenienceFactorProvider provider for per-edge inconvenience factors
 	 */
 	public RoutingServiceImpl(
 			NodeRepository nodeRepository,
 			EdgeRepository edgeRepository,
-			AStarRouter aStarRouter
+			AStarRouter aStarRouter,
+			InconvenienceFactorProvider inconvenienceFactorProvider
 	) {
 		this.nodeRepository = Objects.requireNonNull(nodeRepository, "nodeRepository");
 		this.edgeRepository = Objects.requireNonNull(edgeRepository, "edgeRepository");
 		this.aStarRouter = Objects.requireNonNull(aStarRouter, "aStarRouter");
+		this.inconvenienceFactorProvider = Objects.requireNonNull(
+				inconvenienceFactorProvider, "inconvenienceFactorProvider");
 	}
 
 	/**
@@ -89,11 +97,17 @@ public class RoutingServiceImpl implements RoutingService {
 		Map<Long, List<DirectedEdge>> outgoingBySource = new HashMap<>();
 		Map<Long, DirectedEdge> edgeById = new HashMap<>();
 		for (EdgeEntity edge : subgraphEdges) {
+			double baseCost = edge.getCostSeconds();
+			double factor = inconvenienceFactorProvider.getFactor(
+					edge.getId(), baseCost, edge.getLengthMeters());
+			double effectiveFactor = Math.max(factor, MIN_INCONVENIENCE_FACTOR);
+			double adjustedCost = baseCost * effectiveFactor;
+
 			DirectedEdge directed = new DirectedEdge(
 					edge.getId(),
 					edge.getTarget(),
 					edge.getLengthMeters(),
-					edge.getCostSeconds()
+					adjustedCost
 			);
 			outgoingBySource.computeIfAbsent(edge.getSource(), key -> new ArrayList<>()).add(directed);
 			edgeById.put(edge.getId(), directed);
