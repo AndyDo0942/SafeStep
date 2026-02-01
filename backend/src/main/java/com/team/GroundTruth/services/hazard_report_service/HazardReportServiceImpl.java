@@ -98,7 +98,11 @@ public class HazardReportServiceImpl implements HazardReportService {
                     hazard.setConfidence(score.severityScore());
                     hazards.add(hazard);
                 }
-                savedReport.setHazards(hazards);
+                if (savedReport.getHazards() == null) {
+                    savedReport.setHazards(new ArrayList<>());
+                }
+                savedReport.getHazards().clear();
+                savedReport.getHazards().addAll(hazards);
                 savedReport = hazardReportRepository.save(savedReport);
 
                 boolean hasDeepPothole = false;
