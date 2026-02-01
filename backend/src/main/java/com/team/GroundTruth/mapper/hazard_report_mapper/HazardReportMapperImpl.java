@@ -17,7 +17,7 @@ public class HazardReportMapperImpl implements HazardReportMapper {
      */
     @Override
     public HazardReportRequest fromDto(HazardReportRequestDto dto) {
-        return new HazardReportRequest(dto.userId(), dto.imageUrl());
+        return new HazardReportRequest(dto.userId(), dto.imageUrl(), dto.latitude(), dto.longitude());
     }
 
     /**

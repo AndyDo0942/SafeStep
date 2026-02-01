@@ -7,5 +7,7 @@ import java.util.UUID;
  *
  * @param userId user identifier
  * @param imageUrl image URL for the report
+ * @param latitude latitude coordinate
+ * @param longitude longitude coordinate
  */
-public record HazardReportRequest(UUID userId, String imageUrl) {}
+public record HazardReportRequest(UUID userId, String imageUrl, float latitude, float longitude) {}

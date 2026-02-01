@@ -1,5 +1,6 @@
 package com.team.GroundTruth.domain.entity.HazardReport;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.team.GroundTruth.domain.entity.Hazard.Hazard;
 import com.team.GroundTruth.domain.entity.User.User;
 import jakarta.persistence.*;
@@ -39,6 +40,12 @@ public class HazardReport {
      */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name="longitude", updatable = false)
+    private Float longitude;
+
+    @Column(name="latitude", updatable = false)
+    private Float latitude;
 
     /**
      * Hazards detected within the report.
@@ -84,6 +91,7 @@ public class HazardReport {
      *
      * @return authoring user
      */
+    @JsonIgnore
     public User getUser() {
         return user;
     }
@@ -113,6 +121,42 @@ public class HazardReport {
      */
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    /**
+     * Returns the longitude for the report.
+     *
+     * @return longitude
+     */
+    public Float getLongitude() {
+        return longitude;
+    }
+
+    /**
+     * Sets the longitude for the report.
+     *
+     * @param longitude longitude
+     */
+    public void setLongitude(Float longitude) {
+        this.longitude = longitude;
+    }
+
+    /**
+     * Returns the latitude for the report.
+     *
+     * @return latitude
+     */
+    public Float getLatitude() {
+        return latitude;
+    }
+
+    /**
+     * Sets the latitude for the report.
+     *
+     * @param latitude latitude
+     */
+    public void setLatitude(Float latitude) {
+        this.latitude = latitude;
     }
 
     /**

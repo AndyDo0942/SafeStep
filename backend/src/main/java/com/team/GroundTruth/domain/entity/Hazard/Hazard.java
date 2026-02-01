@@ -1,5 +1,6 @@
 package com.team.GroundTruth.domain.entity.Hazard;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.team.GroundTruth.domain.entity.HazardReport.HazardReport;
 import jakarta.persistence.*;
 
@@ -82,6 +83,7 @@ public class Hazard {
      *
      * @return hazard report
      */
+    @JsonIgnore
     public HazardReport getReport() {
         return report;
     }
