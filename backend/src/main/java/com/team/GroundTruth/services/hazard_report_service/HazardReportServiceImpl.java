@@ -3,10 +3,8 @@ package com.team.GroundTruth.services.hazard_report_service;
 import com.team.GroundTruth.domain.HazardReportRequest;
 import com.team.GroundTruth.domain.entity.Hazard.Hazard;
 import com.team.GroundTruth.domain.entity.HazardReport.HazardReport;
-import com.team.GroundTruth.domain.entity.User.User;
 import com.team.GroundTruth.exception.HazardReportNotFoundException;
 import com.team.GroundTruth.repository.HazardReportRepository;
-import com.team.GroundTruth.repository.UserRepository;
 import com.team.GroundTruth.routing.model.HazardType;
 import com.team.GroundTruth.routing.service.WalkAccessibilityService;
 import com.team.GroundTruth.services.hazard_analysis_service.HazardAnalysisResult;
@@ -32,10 +30,6 @@ public class HazardReportServiceImpl implements HazardReportService {
      */
     private final HazardReportRepository hazardReportRepository;
     /**
-     * Repository used to load users for report ownership.
-     */
-    private final UserRepository userRepository;
-    /**
      * AI service used to analyze report images.
      */
     private final HazardAnalysisService hazardAnalysisService;
@@ -52,20 +46,17 @@ public class HazardReportServiceImpl implements HazardReportService {
      * Creates the service with its repository dependencies.
      *
      * @param hazardReportRepository repository for hazard report persistence
-     * @param userRepository repository for user lookups
      * @param hazardAnalysisService AI service for image analysis
      * @param walkAccessibilityService service for updating edge costs
      * @param potholeInferenceClient client for inference API (pothole depth)
      */
     public HazardReportServiceImpl(
             HazardReportRepository hazardReportRepository,
-            UserRepository userRepository,
             HazardAnalysisService hazardAnalysisService,
             WalkAccessibilityService walkAccessibilityService,
             PotholeInferenceClient potholeInferenceClient
     ) {
         this.hazardReportRepository = hazardReportRepository;
-        this.userRepository = userRepository;
         this.hazardAnalysisService = hazardAnalysisService;
         this.walkAccessibilityService = walkAccessibilityService;
         this.potholeInferenceClient = potholeInferenceClient;
@@ -76,11 +67,10 @@ public class HazardReportServiceImpl implements HazardReportService {
      */
     @Override
     public HazardReport createHazardReport(HazardReportRequest request) {
-        User user = userRepository.findById(request.userId()).orElse(null);
 
         HazardReport report = new HazardReport();
-        report.setUser(user);
-        report.setImageUrl(request.imageUrl());
+        report.setImageBytes(request.imageBytes());
+        report.setImageContentType(request.imageContentType());
         report.setLatitude(request.latitude());
         report.setLongitude(request.longitude());
         report.setHazards(new ArrayList<>());
@@ -88,7 +78,10 @@ public class HazardReportServiceImpl implements HazardReportService {
         HazardReport savedReport = hazardReportRepository.save(report);
 
         try {
-            HazardAnalysisResult result = hazardAnalysisService.analyzeImage(request.imageUrl());
+            HazardAnalysisResult result = hazardAnalysisService.analyzeImage(
+                    request.imageBytes(),
+                    request.imageContentType()
+            );
             if (result != null && result.hazards() != null && !result.hazards().isEmpty()) {
                 List<Hazard> hazards = new ArrayList<>();
                 boolean hasPothole = false;
@@ -111,7 +104,10 @@ public class HazardReportServiceImpl implements HazardReportService {
                 boolean hasDeepPothole = false;
                 if (hasPothole) {
                     try {
-                        hasDeepPothole = potholeInferenceClient.hasDeepPothole(request.imageUrl());
+                        hasDeepPothole = potholeInferenceClient.hasDeepPothole(
+                                request.imageBytes(),
+                                request.imageContentType()
+                        );
                     } catch (RuntimeException e) {
                         LOGGER.warn("Inference API call failed for report {}: {}", savedReport.getId(), e.getMessage());
                     }
@@ -141,12 +137,13 @@ public class HazardReportServiceImpl implements HazardReportService {
     public HazardReport updateHazardReport(UUID id, HazardReportRequest updateHazardReportRequest) {
         HazardReport existingReport = hazardReportRepository.findById(id)
                 .orElseThrow(() -> new HazardReportNotFoundException(id));
-        User user = userRepository.findById(updateHazardReportRequest.userId()).orElse(null);
 
-        existingReport.setUser(user);
-        existingReport.setImageUrl(updateHazardReportRequest.imageUrl());
         existingReport.setLatitude(updateHazardReportRequest.latitude());
         existingReport.setLongitude(updateHazardReportRequest.longitude());
+        if (updateHazardReportRequest.imageBytes() != null && updateHazardReportRequest.imageBytes().length > 0) {
+            existingReport.setImageBytes(updateHazardReportRequest.imageBytes());
+            existingReport.setImageContentType(updateHazardReportRequest.imageContentType());
+        }
 
         return hazardReportRepository.save(existingReport);
     }
