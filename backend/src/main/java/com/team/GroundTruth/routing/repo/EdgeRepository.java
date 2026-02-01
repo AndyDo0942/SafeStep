@@ -44,4 +44,18 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, Long> {
 			@Param("nodeIds") long[] nodeIds,
 			@Param("mode") String mode
 	);
+
+	/**
+	 * Finds all walk edges with their centroid coordinates.
+	 *
+	 * @return list of edge id, latitude, longitude arrays
+	 */
+	@Query(value = """
+			SELECT e.id,
+			       ST_Y(ST_Centroid(e.geom)) as lat,
+			       ST_X(ST_Centroid(e.geom)) as lon
+			FROM edges e
+			WHERE e.mode = 'walk'
+			""", nativeQuery = true)
+	List<Object[]> findWalkEdgeCentroids();
 }
