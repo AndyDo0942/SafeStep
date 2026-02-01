@@ -2,6 +2,6 @@
 <project version="4">
   <component name="DataSourcePerFileMappings">
     <file url="file://$PROJECT_DIR$/src/main/java/com/team/GroundTruth/routing/repo/EdgeRepository.java" value="b71200f9-4dca-4fbd-b7fa-74c9803af25c" />
-    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/b71200f9-4dca-4fbd-b7fa-74c9803af25c/console.sql" value="b71200f9-4dca-4fbd-b7fa-74c9803af25c" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/cb19a069-abf0-4852-9d22-2cac9e84f866/console.sql" value="cb19a069-abf0-4852-9d22-2cac9e84f866" />
   </component>
 </project>
